@@ -1,63 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Input Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        form {
-            max-width: 400px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 15px;
-        }
-        input, textarea, select, button {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <title>SMUAcademy Deduplication</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDd0BwMyxMetApWJcJF34-7_cqeUVeZcoA",
+            authDomain: "smuacademy-qa-dedup-app.firebaseapp.com",
+            projectId: "smuacademy-qa-dedup-app",
+            storageBucket: "smuacademy-qa-dedup-app.firebasestorage.app",
+            messagingSenderId: "275088381757",
+            appId: "1:275088381757:web:ddd13148312872a6711754",
+            measurementId: "G-EXC7W0XFCX"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Vue Application
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    formData: {
+                        group: "",
+                        title: "",
+                        objective: "",
+                        description: ""
+                    }
+                };
+            },
+            methods: {
+                async addCourse() {
+                    try {
+                        const docRef = await addDoc(collection(db, "courses"), this.formData);
+                        alert("Course added successfully with ID: " + docRef.id);
+                        this.resetForm();
+                    } catch (error) {
+                        console.error("Error adding course: ", error);
+                        alert("Failed to add course. Please try again.");
+                    }
+                },
+                resetForm() {
+                    this.formData = {
+                        group: "",
+                        title: "",
+                        objective: "",
+                        description: ""
+                    };
+                }
+            }
+        }).mount("#app");
+    </script>
 </head>
+
 <body>
-    <h1>Group Input Form</h1>
-    <form id="groupForm">
-        <label for="group">Group</label>
-        <select id="group" name="group" required>
-            <option value="">Select a group</option>
-            <option value="HCML">HCML</option>
-            <option value="FIT">FIT</option>
-            <option value="BM">BM</option>
-            <option value="SOBI">SOBI</option>
-        </select>
+    <div id="app" class="container mt-5">
+        <h1 class="text-center mb-4">Add in a Course</h1>
+        <form @submit.prevent="addCourse" class="bg-light p-4 rounded shadow-sm">
+            <div class="mb-3">
+                <label for="group" class="form-label">Group</label>
+                <select v-model="formData.group" id="group" name="group" class="form-select" required>
+                    <option value="">Select a group</option>
+                    <option value="HCML">HCML</option>
+                    <option value="FIT">FIT</option>
+                    <option value="BM">BM</option>
+                    <option value="SOBI">SOBI</option>
+                </select>
+            </div>
 
-        <label for="title">Title</label>
-        <input type="text" id="title" name="title" placeholder="Enter the title" required>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input v-model="formData.title" type="text" id="title" name="title" class="form-control"
+                    placeholder="Enter the title" required>
+            </div>
 
-        <label for="objective">Objective</label>
-        <textarea id="objective" name="objective" placeholder="Enter the objective" rows="3" required></textarea>
+            <div class="mb-3">
+                <label for="objective" class="form-label">Objective</label>
+                <textarea v-model="formData.objective" id="objective" name="objective" class="form-control"
+                    placeholder="Enter the objective" rows="3" required></textarea>
+            </div>
 
-        <label for="description">Description</label>
-        <textarea id="description" name="description" placeholder="Enter the description" rows="5" required></textarea>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea v-model="formData.description" id="description" name="description" class="form-control"
+                    placeholder="Enter the description" rows="5" required></textarea>
+            </div>
 
-        <button type="submit">Submit</button>
-    </form>
-
-    
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
 </body>
+
 </html>
