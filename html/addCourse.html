@@ -14,23 +14,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Firebase -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "",
-            authDomain: "smuacademy-qa-dedup-app.firebaseapp.com",
-            projectId: "smuacademy-qa-dedup-app",
-            storageBucket: "smuacademy-qa-dedup-app.firebasestorage.app",
-            messagingSenderId: "275088381757",
-            appId: "1:275088381757:web:ddd13148312872a6711754",
-            measurementId: "G-EXC7W0XFCX"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        import {db, getFirestore, collection, doc, setDoc } from '../js/database.js'
 
         // Vue Application
         const { createApp } = Vue;
@@ -48,9 +32,23 @@
             },
             methods: {
                 async addCourse() {
+                    if (!this.formData.group || !this.formData.title) {
+                        alert("Please select a group and enter a title.");
+                        return;
+                    }
+
                     try {
-                        const docRef = await addDoc(collection(db, "courses"), this.formData);
-                        alert("Course added successfully with ID: " + docRef.id);
+                        // Reference to the specific group and course title
+                        const groupRef = doc(db, this.formData.group, this.formData.title);
+                        
+                        // Set the course data in Firestore
+                        await setDoc(groupRef, {
+                            title: this.formData.title,
+                            objective: this.formData.objective,
+                            description: this.formData.description
+                        });
+
+                        alert("Course added successfully!");
                         this.resetForm();
                     } catch (error) {
                         console.error("Error adding course: ", error);
