@@ -1,37 +1,38 @@
-import { searchSimilarCourses } from './similarityCheck.js'; // Ensure the path is correct
+import { searchSimilarCourses } from './similarityCheck.js';
 import { downloadExcel } from './exportExcel.js';
 
-// Handle form submission
 document.getElementById("courseForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const searchCriteria = document.querySelector('input[name="searchBy"]:checked').value; // Selected search criteria
-  const searchTerm = document.getElementById("searchTerm").value; // Input search term
-  const inputObjective = document.getElementById("inputObjective").value; // Input course objective
-  const inputDescription = document.getElementById("inputDescription").value; // Input course description
+  const searchTerm = document.getElementById("searchTerm").value.trim(); // Inputted course title
+  const searchCriteria = "Title"; // We're only comparing course titles
 
   try {
-    const similarCourses = await searchSimilarCourses(searchTerm, searchCriteria);
+    const similarCourses = await searchSimilarCourses(searchTerm, searchCriteria); // Pass 'Title' explicitly
 
     const table = document.getElementById("similarCoursesTable");
     const downloadButton = document.getElementById("downloadExcel");
     table.innerHTML = ""; // Clear previous results
 
-    // If no courses found
     if (similarCourses.length === 0) {
       table.innerHTML = "<tr><td colspan='7' class='text-center'>No courses found</td></tr>";
       downloadButton.style.display = "none";
     } else {
-      // Create table headers
+      // Fetch the description and objectives of the inputted course title
+      const inputtedCourse = similarCourses.find(course => course.course.Title === searchTerm);
+      const inputtedDescription = inputtedCourse?.course.Description || "-";
+      const inputtedObjective = inputtedCourse?.course.Objective || "-";
+
+      // Define table headers
       table.innerHTML = `
         <thead>
           <tr>
             <th>Inputted Course Title</th>
+            <th>Description of Inputted Course Title</th>
+            <th>Objectives of Inputted Course Title</th>
             <th>Compared Course Title</th>
-            <th>Inputted Course Description</th>
-            <th>Compared Course Description</th>
-            <th>Inputted Course Objective</th>
-            <th>Compared Course Objective</th>
+            <th>Description of Compared Course Title</th>
+            <th>Objectives of Compared Course Title</th>
             <th>Similarity Index</th>
           </tr>
         </thead>
@@ -41,33 +42,32 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
       const tbody = table.querySelector("tbody");
 
       // Populate table rows with search results
-      similarCourses.forEach((item) => {
-        const course = item.course; // Get the course data from the item
+      similarCourses.forEach(item => {
+        const course = item.course;
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${searchTerm}</td> <!-- Input course title -->
-          <td>${course.Title}</td> <!-- Compared course title -->
-          <td>${inputDescription}</td> <!-- Input course description -->
-          <td>${course.Description}</td> <!-- Compared course description -->
-          <td>${inputObjective}</td> <!-- Input course objective -->
-          <td>${course.Objective}</td> <!-- Compared course objective -->
-          <td>${item.similarity.toFixed(2)}</td> <!-- Similarity index -->
+          <td>${searchTerm}</td>
+          <td>${inputtedDescription}</td>
+          <td>${inputtedObjective}</td>
+          <td>${course.Title || "-"}</td>
+          <td>${course.Description || "-"}</td>
+          <td>${course.Objective || "-"}</td>
+          <td>${item.similarity.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
       });
 
-      // Show download button
       downloadButton.style.display = "block";
 
       // Add event listener to download the results
       downloadButton.addEventListener("click", () => {
-        const exportData = similarCourses.map((item) => ({
+        const exportData = similarCourses.map(item => ({
           "Inputted Course Title": searchTerm,
-          "Compared Course Title": item.course.Title,
-          "Inputted Course Description": inputDescription,
-          "Compared Course Description": item.course.Description,
-          "Inputted Course Objective": inputObjective,
-          "Compared Course Objective": item.course.Objective,
+          "Description of Inputted Course Title": inputtedDescription,
+          "Objectives of Inputted Course Title": inputtedObjective,
+          "Compared Course Title": item.course.Title || "-",
+          "Description of Compared Course Title": item.course.Description || "-",
+          "Objectives of Compared Course Title": item.course.Objective || "-",
           "Similarity Index": item.similarity.toFixed(2),
         }));
         downloadExcel(exportData, "SimilarCourses.xlsx");
@@ -77,5 +77,3 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
     console.error("Error fetching courses:", error);
   }
 });
-
-
