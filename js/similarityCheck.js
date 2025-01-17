@@ -31,7 +31,7 @@ export const calculateSimilarity = (courseField, inputField) => {
   const similarity = 1 - distance / Math.max(alen, blen);
 
   console.log(`Calculating similarity for: "${courseField}" vs "${inputField}"`);
-  console.log(`Levenshtein Distance: ${distance}, Similarity: ${similarity}`);
+  console.log(`Levenshtein Distance: ${distance}, Similarity: ${similarity.toFixed(3)}`);
 
   return similarity; // Return similarity as a value between 0 and 1
 };
@@ -64,28 +64,34 @@ export const searchSimilarCourses = async (inputSearchTerm, searchCriteria) => {
       if (courseField) {
         console.log(`Value of '${searchCriteria}' field: ${courseField}`);
         const similarity = calculateSimilarity(courseField, inputSearchTerm);
-        console.log(`Calculated Similarity: ${similarity}`);
 
-        allSimilarities.push({
-          course,
-          similarity,
-          courseTitle: course.Title, // Store course title
-          coursePillar: collectionName // Store collection (pillar)
-        });
+        if (similarity >= 0.7) {
+          console.log(`Calculated Similarity (>= 0.7): ${similarity.toFixed(3)}`);
+
+          allSimilarities.push({
+            course,
+            similarity: parseFloat(similarity.toFixed(3)), // Round to 3 decimal places
+            courseTitle: course.Title, // Store course title
+            coursePillar: collectionName // Store collection (pillar)
+          });
+        } else {
+          console.log(`Similarity < 0.7. Skipping document ID: ${doc.id}`);
+        }
       } else {
         console.warn(`Field '${searchCriteria}' is missing in document ID: ${doc.id}`);
       }
     });
   }
 
-  // Sort by similarity and return top 10
+  // Filter and sort by similarity (>= 0.7) and return top 10
   const topCourses = allSimilarities
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, 10);
 
   console.log(`Total courses processed: ${allSimilarities.length}`);
-  console.log("Top 10 Similar Courses:", topCourses);
+  console.log("Top 10 Similar Courses (>= 0.7 similarity):", topCourses);
 
-  return topCourses; // Return top 10 results
+  return topCourses; // Return top 10 results with similarity >= 0.7
 };
+
 
