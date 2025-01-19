@@ -1,4 +1,4 @@
-import { db, collection, getDocs } from './database.js';
+import { db, collection, getDocs, doc, getDoc } from './database.js';
 
 // Levenshtein distance function for string similarity calculation
 export const calculateSimilarity = (courseField, inputField) => {
@@ -30,73 +30,74 @@ export const calculateSimilarity = (courseField, inputField) => {
   return similarity; // Return similarity as a value between 0 and 1
 };
 
-// Function to highlight matching phrases in a given text
-export const highlightPhrases = (inputText, courseText, color = "yellow") => {
-  const minPhraseLength = 4; // Minimum number of words for a phrase
-  const inputWords = inputText.toLowerCase().split(/\s+/);
-  const courseWords = courseText.toLowerCase().split(/\s+/);
-
-  const phrasesToMatch = new Set();
-
-  // Generate phrases (n-grams) of at least `minPhraseLength` words from input text
-  for (let i = 0; i <= inputWords.length - minPhraseLength; i++) {
-    for (let j = minPhraseLength; j <= inputWords.length - i; j++) {
-      const phrase = inputWords.slice(i, i + j).join(" ");
-      phrasesToMatch.add(phrase);
-    }
-  }
-
-  // Highlight matching phrases in the course text
-  let highlightedText = courseText;
-  phrasesToMatch.forEach(phrase => {
-    const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "gi"); // Match whole phrases
-    highlightedText = highlightedText.replace(regex, `<mark style="background-color: ${color};">${phrase}</mark>`);
-  });
-
-  return highlightedText;
-};
-
-
 // Function to fetch courses and compare similarity
-export const searchSimilarCourses = async (inputSearchTerm, inputDescription, inputObjective) => {
+export const searchSimilarCourses = async (inputSearchTerm) => {
   const collections = ["BM", "FIT", "SOBI", "HCML"];
   const allSimilarities = [];
 
+  let inputCourse = null;
+
+  // Retrieve the inputted course details
   for (const collectionName of collections) {
+    const courseDocRef = doc(db, collectionName, inputSearchTerm);
+    const courseDoc = await getDoc(courseDocRef);
+
+    if (courseDoc.exists()) {
+      inputCourse = courseDoc.data();
+      break;
+    }
+  }
+
+  if (!inputCourse) {
+    throw new Error("No course found with the given title.");
+  }
+
+  const inputDescription = inputCourse.Description || "";
+  const inputObjective = inputCourse.Objective || "";
+
+  console.log("Input Course Description:", inputDescription);
+  console.log("Input Course Objective:", inputObjective);
+
+  // Compare the inputted course with all other courses in the database
+  for (const collectionName of collections) {
+    console.log(`Processing collection: ${collectionName}`);
     const collectionRef = collection(db, collectionName);
     const snapshot = await getDocs(collectionRef);
 
     snapshot.forEach(doc => {
       const course = doc.data();
+      console.log(`Processing document: ${doc.id} in collection: ${collectionName}`);
+
+      // Skip the inputted course itself
+      if (course.Title === inputSearchTerm) return;
 
       // Calculate similarity scores
-      const titleSimilarity = calculateSimilarity(course.Title || "", inputSearchTerm);
       const descriptionSimilarity = calculateSimilarity(course.Description || "", inputDescription);
       const objectiveSimilarity = calculateSimilarity(course.Objective || "", inputObjective);
 
-      const combinedSimilarity = (titleSimilarity + descriptionSimilarity + objectiveSimilarity) / 3;
+      const combinedSimilarity = (descriptionSimilarity + objectiveSimilarity) / 2;
+
+      console.log(`Course: ${course.Title}, Description Similarity: ${descriptionSimilarity}, Objective Similarity: ${objectiveSimilarity}, Combined Similarity: ${combinedSimilarity}`);
 
       // Only include courses with sufficient similarity
-      if (combinedSimilarity >= 0.7) {
-        // Highlight phrases in the inputted course fields using the compared course fields
-        const highlightedInputDescription = highlightPhrases(inputDescription, inputDescription, "yellow");
-        const highlightedInputObjective = highlightPhrases(inputObjective, inputObjective, "lightblue");
+      if (combinedSimilarity > 0.6) {
+        // Explanation for similarity
+        const similarityExplanation = `Description Similarity: ${descriptionSimilarity.toFixed(2)}, Objective Similarity: ${objectiveSimilarity.toFixed(2)}`;
 
-        // Highlight phrases in the compared course fields using the inputted course fields
-        const highlightedCourseDescription = highlightPhrases(course.Description || "", inputDescription, "yellow");
-        const highlightedCourseObjective = highlightPhrases(course.Objective || "", inputObjective, "lightblue");
+        console.log("Compared Course:", course.Title);
+        console.log("Combined Similarity:", combinedSimilarity);
+        console.log("Similarity Explanation:", similarityExplanation);
 
         allSimilarities.push({
           course,
           similarity: parseFloat(combinedSimilarity.toFixed(3)),
-          highlightedInputDescription,
-          highlightedInputObjective,
-          highlightedCourseDescription,
-          highlightedCourseObjective,
+          similarityExplanation,
         });
       }
     });
   }
+
+  console.log("All Similarities:", allSimilarities);
 
   return allSimilarities.sort((a, b) => b.similarity - a.similarity).slice(0, 10);
 };

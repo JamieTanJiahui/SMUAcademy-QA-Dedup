@@ -1,4 +1,4 @@
-import { highlightPhrases, searchSimilarCourses } from './similarityCheck.js';
+import { searchSimilarCourses } from './similarityCheck.js';
 import { downloadExcel } from './exportExcel.js';
 import { db, doc, getDoc } from './database.js';
 
@@ -36,12 +36,8 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
         const inputDescription = inputCourse.Description || "";
         const inputObjective = inputCourse.Objective || "";
 
-        // Perform similarity search (with phrase highlighting)
-        const similarCourses = await searchSimilarCourses(
-            searchTerm,
-            inputDescription,
-            inputObjective
-        );
+        // Perform similarity search
+        const similarCourses = await searchSimilarCourses(searchTerm);
 
         const table = document.getElementById("similarCoursesTable");
         const downloadButton = document.getElementById("downloadExcel");
@@ -49,7 +45,7 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
         table.innerHTML = "";
 
         if (similarCourses.length === 0) {
-            table.innerHTML = "<tr><td colspan='7' class='text-center'>No courses found</td></tr>";
+            table.innerHTML = "<tr><td colspan='8' class='text-center'>No courses found</td></tr>";
             downloadButton.style.display = "none";
         } else {
             // Generate table headers
@@ -57,12 +53,13 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
                 <thead>
                     <tr>
                         <th>Inputted Course Title</th>
-                        <th>Highlighted Description of Inputted Course</th>
-                        <th>Highlighted Objective of Inputted Course</th>
+                        <th>Description of Inputted Course</th>
+                        <th>Objective of Inputted Course</th>
                         <th>Compared Course Title</th>
-                        <th>Highlighted Compared Description</th>
-                        <th>Highlighted Compared Objective</th>
+                        <th>Description of Compared Course</th>
+                        <th>Objective of Compared Course</th>
                         <th>Similarity Index</th>
+                        <th>Similarity Explanation</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -74,16 +71,16 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${inputCourse.Title}</td>
-                    <td>${item.highlightedInputDescription || "-"}</td>
-                    <td>${item.highlightedInputObjective || "-"}</td>
+                    <td>${inputDescription}</td>
+                    <td>${inputObjective}</td>
                     <td>${item.course.Title || "-"}</td>
-                    <td>${item.highlightedCourseDescription || "-"}</td>
-                    <td>${item.highlightedCourseObjective || "-"}</td>
+                    <td>${item.course.Description || "-"}</td>
+                    <td>${item.course.Objective || "-"}</td>
                     <td>${item.similarity.toFixed(2)}</td>
+                    <td>${item.similarityExplanation}</td>
                 `;
                 tbody.appendChild(row);
             });
-            
 
             // Show the results table and header
             resultsHeader.style.display = "block";
@@ -94,12 +91,13 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
             downloadButton.addEventListener("click", () => {
                 const exportData = similarCourses.map(item => ({
                     "Inputted Course Title": inputCourse.Title,
-                    "Highlighted Inputted Course Description": item.highlightedInputDescription || "-",
-                    "Highlighted Inputted Course Objective": item.highlightedInputObjective || "-",
+                    "Description of Inputted Course": inputDescription,
+                    "Objective of Inputted Course": inputObjective,
                     "Compared Course Title": item.course.Title || "-",
-                    "Highlighted Compared Course Description": item.highlightedCourseDescription || "-",
-                    "Highlighted Compared Course Objective": item.highlightedCourseObjective || "-",
+                    "Description of Compared Course": item.course.Description || "-",
+                    "Objective of Compared Course": item.course.Objective || "-",
                     "Similarity Index": item.similarity.toFixed(2),
+                    "Similarity Explanation": item.similarityExplanation,
                 }));
                 downloadExcel(exportData);
             });
