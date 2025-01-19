@@ -80,7 +80,7 @@ export const searchSimilarCourses = async (inputSearchTerm) => {
       console.log(`Course: ${course.Title}, Description Similarity: ${descriptionSimilarity}, Objective Similarity: ${objectiveSimilarity}, Combined Similarity: ${combinedSimilarity}`);
 
       // Only include courses with sufficient similarity
-      if (combinedSimilarity > 0.6) {
+      if (combinedSimilarity > 0.7) {
         // Explanation for similarity
         const similarityExplanation = `Description Similarity: ${descriptionSimilarity.toFixed(2)}, Objective Similarity: ${objectiveSimilarity.toFixed(2)}`;
 

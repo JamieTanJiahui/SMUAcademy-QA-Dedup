@@ -4,8 +4,9 @@ The SMUAcademy Quality Assurance Deduplication Application is a web application 
 
 ## Features of the application 
 1. Similarity checks across the dataset with new proposed courses 
-2. Allows pillars to submit new proposed courses online 
-3. Allows users to download Excel sheet of similiarity checks 
+2. Allows users to add new proposed courses before running a similarity check
+3. Shows a breakdown of similarity index into 2 sections: Description Similarity and Objective Similarity
+4. Allows users to download Excel sheet of similiarity checks 
 
 ## Tools used 
 * HTML 
