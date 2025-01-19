@@ -8,10 +8,8 @@ export const calculateSimilarity = (courseField, inputField) => {
   const alen = a.length;
   const blen = b.length;
 
-  // Handle edge cases for empty strings
   if (!alen || !blen) return 0;
 
-  // Create a 2D array for storing distances
   const dp = Array.from({ length: alen + 1 }, () => Array(blen + 1).fill(0));
 
   for (let i = 0; i <= alen; i++) dp[i][0] = i;
@@ -29,69 +27,55 @@ export const calculateSimilarity = (courseField, inputField) => {
 
   const distance = dp[alen][blen];
   const similarity = 1 - distance / Math.max(alen, blen);
-
-  console.log(`Calculating similarity for: "${courseField}" vs "${inputField}"`);
-  console.log(`Levenshtein Distance: ${distance}, Similarity: ${similarity.toFixed(3)}`);
-
   return similarity; // Return similarity as a value between 0 and 1
 };
 
-// Function to fetch courses and compare similarity
-export const searchSimilarCourses = async (inputSearchTerm, searchCriteria) => {
-  console.log("Starting searchSimilarCourses function...");
-  console.log(`Input Search Term: ${inputSearchTerm}`);
-  console.log(`Search Criteria: ${searchCriteria}`);
+// Function to highlight matching phrases in a given text
+export const highlightPhrases = (inputText, courseText, color = "yellow") => {
+  const inputWords = inputText.toLowerCase().split(/\s+/);
+  const courseWords = courseText.toLowerCase().split(/\s+/);
+  
+  return courseWords
+    .map(word => (inputWords.includes(word) ? `<mark style="background-color: ${color};">${word}</mark>` : word))
+    .join(" ");
+};
 
+// Function to fetch courses and compare similarity
+export const searchSimilarCourses = async (inputSearchTerm, inputDescription, inputObjective) => {
   const collections = ["BM", "FIT", "SOBI", "HCML"]; // List of collections
   const allSimilarities = [];
 
   // Loop through each collection
   for (const collectionName of collections) {
-    console.log(`Accessing collection: ${collectionName}`);
     const collectionRef = collection(db, collectionName);
     const snapshot = await getDocs(collectionRef);
 
-    console.log(`Fetched ${snapshot.size} documents from collection: ${collectionName}`);
-
-    // Loop through each document in the collection
     snapshot.forEach(doc => {
       const course = doc.data(); // Get document data
-      console.log(`Processing document ID: ${doc.id}`);
-      console.log(`Document Data:`, course);
 
-      const courseField = course[searchCriteria]; // Fetch the field based on the search criteria
+      const titleSimilarity = calculateSimilarity(course.Title || "", inputSearchTerm);
+      const descriptionSimilarity = calculateSimilarity(course.Description || "", inputDescription);
+      const objectiveSimilarity = calculateSimilarity(course.Objective || "", inputObjective);
 
-      if (courseField) {
-        console.log(`Value of '${searchCriteria}' field: ${courseField}`);
-        const similarity = calculateSimilarity(courseField, inputSearchTerm);
+      const combinedSimilarity = (titleSimilarity + descriptionSimilarity + objectiveSimilarity) / 3;
 
-        if (similarity >= 0.7) {
-          console.log(`Calculated Similarity (>= 0.7): ${similarity.toFixed(3)}`);
+      if (combinedSimilarity >= 0.7) {
+        // Highlight similar phrases in description and objectives
+        const highlightedDescription = highlightPhrases(inputDescription, course.Description || "", "yellow");
+        const highlightedObjective = highlightPhrases(inputObjective, course.Objective || "", "lightblue");
 
-          allSimilarities.push({
-            course,
-            similarity: parseFloat(similarity.toFixed(3)), // Round to 3 decimal places
-            courseTitle: course.Title, // Store course title
-            coursePillar: collectionName // Store collection (pillar)
-          });
-        } else {
-          console.log(`Similarity < 0.7. Skipping document ID: ${doc.id}`);
-        }
-      } else {
-        console.warn(`Field '${searchCriteria}' is missing in document ID: ${doc.id}`);
+        allSimilarities.push({
+          course,
+          similarity: parseFloat(combinedSimilarity.toFixed(3)),
+          highlightedDescription,  // Highlighted description
+          highlightedObjective,    // Highlighted objective
+        });
       }
     });
   }
 
-  // Filter and sort by similarity (>= 0.7) and return top 10
   const topCourses = allSimilarities
     .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 10);
-
-  console.log(`Total courses processed: ${allSimilarities.length}`);
-  console.log("Top 10 Similar Courses (>= 0.7 similarity):", topCourses);
-
-  return topCourses; // Return top 10 results with similarity >= 0.7
+    .slice(0, 10); // Top 10 courses
+  return topCourses;
 };
-
-
