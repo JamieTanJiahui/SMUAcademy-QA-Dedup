@@ -46,6 +46,7 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
 
         const table = document.getElementById("similarCoursesTable");
         const downloadButton = document.getElementById("downloadExcel");
+        const resultsHeader = document.getElementById("resultsHeader");
         table.innerHTML = "";
 
         if (similarCourses.length === 0) {
@@ -83,6 +84,9 @@ document.getElementById("courseForm").addEventListener("submit", async (e) => {
                 tbody.appendChild(row);
             });
 
+            // Show the results table and header
+            resultsHeader.style.display = "block";
+            table.style.display = "block";
             downloadButton.style.display = "block";
 
             downloadButton.addEventListener("click", () => {
