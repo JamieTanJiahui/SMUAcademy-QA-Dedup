@@ -13,3 +13,9 @@ The SMUAcademy Quality Assurance Deduplication Application is a web application 
 * CSS 
 * Javascript (Vue.js)
 * Firestore console (Database)
+
+### Need to add in
+* Remove Course function (reactive title)
+* Highlighting of similar phrases (need to resolve issue)
+* Add columns of similarity checker 
+* Login page for security (Firebase authentication)
