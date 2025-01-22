@@ -19,3 +19,6 @@ The SMUAcademy Quality Assurance Deduplication Application is a web application 
 * Highlighting of similar phrases (need to resolve issue)
 * Add columns of similarity checker 
 * Login page for security (Firebase authentication)
+* Put the pillar name of each course title inside search results 
+
+#### Agile, Waterfall
