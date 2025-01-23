@@ -14,11 +14,12 @@ The SMUAcademy Quality Assurance Deduplication Application is a web application 
 * Javascript (Vue.js)
 * Firestore console (Database)
 
-### Need to add in
-* Remove Course function (reactive title)
-* Highlighting of similar phrases (need to resolve issue)
-* Add columns of similarity checker 
-* Login page for security (Firebase authentication)
-* Put the pillar name of each course title inside search results 
+### Timeline of events 
+Before CNY: Determine roles and assigning of tasks 
+CNY Season: Paper prototypes + Setting up of database in QA Google Account
+Week of 3 Feb: Run through paper prototypes with team, ensure user-friendly 
+Week of 10 Feb - Week of 10 March: Complee skeletal code of website 
+Week od 17 March: Tweaks in website according to Eze and YanPing
+Week of 31 March: Deploy website
 
-#### Agile, Waterfall
+After setting up database: Throughout the timeline periodically shift data from excel to database
